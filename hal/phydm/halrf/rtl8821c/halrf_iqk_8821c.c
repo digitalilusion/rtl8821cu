@@ -649,9 +649,9 @@ _iqk_reload_iqk_setting_8821c(
 				odm_write_4byte(p_dm, 0x1bd8, ((0xc0000000 >> idx) + 0x1) + (i * 4) + (p_iqk_info->IQK_CFIR_imag[channel][path][idx][i] << 9));
 			}
 			if (idx == 0)
-				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(0), ~(p_iqk_info->IQK_fail_report[channel][path][idx]));
+				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(0), !(p_iqk_info->IQK_fail_report[channel][path][idx]));
 			else
-				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(10), ~(p_iqk_info->IQK_fail_report[channel][path][idx]));
+				odm_set_bb_reg(p_dm, iqk_apply[path], BIT(10), !(p_iqk_info->IQK_fail_report[channel][path][idx]));
 		}
 		odm_set_bb_reg(p_dm, 0x1bd8, MASKDWORD, 0x0);
 		odm_set_bb_reg(p_dm, 0x1b0c, BIT(13) | BIT(12), 0x0);
@@ -2259,8 +2259,8 @@ _phy_txgapk_calibrate_8821c(
 					tmp3 = _txgapk_one_shot_8821c(p_dm, RF_PATH_A, txgain[i]-2);
 				else
 					tmp3 = _txgapk_one_shot_8821c(p_dm, RF_PATH_A, txgain[i]);
-				
-					tmp4 = _txgapk_one_shot_8821c(p_dm, RF_PATH_A, txgain[i+1]);									
+				// MOD <--
+				tmp4 = _txgapk_one_shot_8821c(p_dm, RF_PATH_A, txgain[i+1]);									
 				
 
 				if (overflowflag ==true){
@@ -2518,12 +2518,12 @@ void
 		gainloss_back = 0xa - gainloss_back;
 
 
-		if (gainloss_back > pa_scan_pw + 0x8)
-			odm_set_rf_reg(p_dm, path, 0x8f, BIT(14) | BIT(13), 0x11);
-		else if ( (pa_scan_pw + 0x8 - gainloss_back)>= 0x6 )	
-			odm_set_rf_reg(p_dm, path, 0x8f, BIT(14) | BIT(13), 0x00);
-		else /*if (0x6 >= (pa_scan_pw + 0x8 - gainloss_back)> 0x0 )*/		
-			odm_set_rf_reg(p_dm, path, 0x8f, BIT(14) | BIT(13), 0x01);
+	if (gainloss_back > pa_scan_pw + 0x8)
+		odm_set_rf_reg(p_dm, path, 0x8f, BIT(14) | BIT(13), 0x11);
+	else if ( (pa_scan_pw + 0x8 - gainloss_back)>= 0x6 )	
+		odm_set_rf_reg(p_dm, path, 0x8f, BIT(14) | BIT(13), 0x00);
+	else /*if (0x6 >= (pa_scan_pw + 0x8 - gainloss_back)> 0x0 )*/		
+		odm_set_rf_reg(p_dm, path, 0x8f, BIT(14) | BIT(13), 0x01);
 
 	ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 	("[IQK] reg_1bfc =0x%x, pa_scan_pw =0x%x, gainloss_back = 0x%x, pa_scan_i = 0x%x, pa_scan_q = 0x%x, RF0x8f = 0x%x, !!!\n", 	
@@ -3471,13 +3471,13 @@ _iqk_rximr_selfcheck_8821c(
 		default:
 			break;
 		}
-		rximr = (u32)(3*((halrf_psd_log2base(rx_ini_power_L[0]/100) - halrf_psd_log2base(rx_ini_power_L[1]/100)))/100);
+	rximr = (u32)(3*((halrf_psd_log2base(rx_ini_power_L[0]/100) - halrf_psd_log2base(rx_ini_power_L[1]/100)))/100);
 /*
 		PHYDM_DBG(p_dm, ODM_COMP_CALIBRATION, ("%-20s: 0x%x, 0x%x, 0x%x, 0x%x,0x%x, tone_index=%x, rximr= %d\n",
 		(path == 0) ? "PATH A RXIMR ": "PATH B RXIMR",
 		rx_ini_power_H[0], rx_ini_power_L[0], rx_ini_power_H[1], rx_ini_power_L[1], tmp1bcc, tone_index, rximr));
 */
-		return rximr;
+	return rximr;
 }
 
 void
@@ -4009,71 +4009,71 @@ void dpk_temperature_compensate_8821c(
 	/*if ap mode, disable dpk*/
     if (DM_ODM_SUPPORT_TYPE & ODM_AP)	
         return;
-	if (!dpk_tm_trigger) {
-		odm_set_rf_reg(p_dm, RF_PATH_A, 0x42, BIT(17) | BIT(16), 0x03);
-		/*ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("[DPK] (1) Trigger Thermal Meter!!\n"));*/
-		dpk_tm_trigger = 1;
-		return;
-	} else {
+    if (!dpk_tm_trigger) {
+	odm_set_rf_reg(p_dm, RF_PATH_A, 0x42, BIT(17) | BIT(16), 0x03);
+	/*ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("[DPK] (1) Trigger Thermal Meter!!\n"));*/
+	dpk_tm_trigger = 1;
+	return;
+    } else {
 
-		/* Initialize */
-		dpk_tm_trigger = 0;
-		/*ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("[DPK] (2) calculate the thermal !!\n"));
-		*/
+	/* Initialize */
+	dpk_tm_trigger = 0;
+	/*ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD, ("[DPK] (2) calculate the thermal !!\n"));
+	*/
 
-		/* calculate average thermal meter */
-		thermal_value = (u8)odm_get_rf_reg(p_dm, RF_PATH_A, 0x42, 0xfc00);	/*0x42: RF Reg[15:10] 88E*/
-		ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
+	/* calculate average thermal meter */
+	thermal_value = (u8)odm_get_rf_reg(p_dm, RF_PATH_A, 0x42, 0xfc00);	/*0x42: RF Reg[15:10] 88E*/
+	ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
 			("[DPK] (3) current Thermal Meter = %d\n", thermal_value));
 
-		p_dm->rf_calibrate_info.thermal_value_dpk = thermal_value;
-		p_dm->rf_calibrate_info.thermal_value_avg[p_dm->rf_calibrate_info.thermal_value_avg_index] = thermal_value;
-		p_dm->rf_calibrate_info.thermal_value_avg_index++;
-		if (p_dm->rf_calibrate_info.thermal_value_avg_index == thermal_value_avg_times)
-			p_dm->rf_calibrate_info.thermal_value_avg_index = 0;
-		for (i = 0; i < thermal_value_avg_times; i++) {
-			if (p_dm->rf_calibrate_info.thermal_value_avg[i]) {
-				thermal_value_avg += p_dm->rf_calibrate_info.thermal_value_avg[i];
-				thermal_value_avg_count++;
-			}
+	p_dm->rf_calibrate_info.thermal_value_dpk = thermal_value;
+	p_dm->rf_calibrate_info.thermal_value_avg[p_dm->rf_calibrate_info.thermal_value_avg_index] = thermal_value;
+	p_dm->rf_calibrate_info.thermal_value_avg_index++;
+	if (p_dm->rf_calibrate_info.thermal_value_avg_index == thermal_value_avg_times)
+		p_dm->rf_calibrate_info.thermal_value_avg_index = 0;
+	for (i = 0; i < thermal_value_avg_times; i++) {
+		if (p_dm->rf_calibrate_info.thermal_value_avg[i]) {
+			thermal_value_avg += p_dm->rf_calibrate_info.thermal_value_avg[i];
+			thermal_value_avg_count++;
 		}
-		if (thermal_value_avg_count)  /*Calculate Average thermal_value after average enough times*/
-			thermal_value = (u8)(thermal_value_avg / thermal_value_avg_count);
-		/* compensate the DPK */
-		delta_dpk = (thermal_value > pgthermal) ? (thermal_value - pgthermal) : (pgthermal - thermal_value);
-		tmp = (u8)((dpk_result[0] & 0x00001f00) >> 8);
-		ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
-			("[DPK] (5)delta_dpk = %d, eeprom_thermal_meter = %d, tmp=%d\n", delta_dpk, pgthermal, tmp));
-
-
-		if (thermal_value > pgthermal) {
-			abs_temperature = thermal_value - pgthermal;
-			if (abs_temperature >= 20)
-				tmp = tmp + 4;
-			else if (abs_temperature >= 15)
-				tmp = tmp + 3;
-			else if (abs_temperature >= 10)
-				tmp = tmp + 2;
-			else if (abs_temperature >= 5)
-				tmp = tmp + 1;
-		} else { /*low temperature*/
-			abs_temperature = pgthermal - thermal_value;
-			if (abs_temperature >= 20)
-				tmp = tmp - 4;
-			else if (abs_temperature >= 15)
-				tmp = tmp - 3;
-			else if (abs_temperature >= 10)
-				tmp = tmp - 2;
-			else if (abs_temperature >= 5)
-				tmp = tmp - 1;
-		}
-
-		odm_set_bb_reg(p_dm, 0x1bd0, BIT(12) | BIT(11) | BIT(10) | BIT(9) | BIT(8), tmp);
-		ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
-			("[DPK] (6)delta_dpk = %d, eeprom_thermal_meter = %d, new tmp=%d, 0x1bd0=0x%x\n", 
-			delta_dpk,pgthermal, tmp, odm_read_4byte(p_dm, 0x1bd0)));
-
 	}
+	if (thermal_value_avg_count)  /*Calculate Average thermal_value after average enough times*/
+		thermal_value = (u8)(thermal_value_avg / thermal_value_avg_count);
+	/* compensate the DPK */
+	delta_dpk = (thermal_value > pgthermal) ? (thermal_value - pgthermal) : (pgthermal - thermal_value);
+	tmp = (u8)((dpk_result[0] & 0x00001f00) >> 8);
+	ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
+		("[DPK] (5)delta_dpk = %d, eeprom_thermal_meter = %d, tmp=%d\n", delta_dpk, pgthermal, tmp));
+
+
+	if (thermal_value > pgthermal) {
+		abs_temperature = thermal_value - pgthermal;
+		if (abs_temperature >= 20)
+			tmp = tmp + 4;
+		else if (abs_temperature >= 15)
+			tmp = tmp + 3;
+		else if (abs_temperature >= 10)
+			tmp = tmp + 2;
+		else if (abs_temperature >= 5)
+			tmp = tmp + 1;
+	} else { /*low temperature*/
+		abs_temperature = pgthermal - thermal_value;
+		if (abs_temperature >= 20)
+			tmp = tmp - 4;
+		else if (abs_temperature >= 15)
+			tmp = tmp - 3;
+		else if (abs_temperature >= 10)
+			tmp = tmp - 2;
+		else if (abs_temperature >= 5)
+			tmp = tmp - 1;
+	}
+
+	odm_set_bb_reg(p_dm, 0x1bd0, BIT(12) | BIT(11) | BIT(10) | BIT(9) | BIT(8), tmp);
+	ODM_RT_TRACE(p_dm, ODM_COMP_CALIBRATION, ODM_DBG_LOUD,
+		("[DPK] (6)delta_dpk = %d, eeprom_thermal_meter = %d, new tmp=%d, 0x1bd0=0x%x\n", 
+		delta_dpk,pgthermal, tmp, odm_read_4byte(p_dm, 0x1bd0)));
+
+    }
 }
 
 #endif
